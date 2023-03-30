@@ -10,6 +10,12 @@ const (
 	minerReward int = 50
 )
 
+type mempool struct {
+	Txs []*Tx
+}
+
+var Mempool *mempool = &mempool{}
+
 type Tx struct {
 	Id        string   `json:"id"`
 	Timestamp int      `json:"timestamp"`
@@ -22,18 +28,25 @@ func (t *Tx) getId() {
 }
 
 type TxIn struct {
-	Owner  string
-	Amount int
+	TxID  string `json:"txId"`
+	Index int    `json:"index"`
+	Owner string `json:"owner"`
 }
 
 type TxOut struct {
-	Owner  string
+	Owner  string `json:"owner"`
+	Amount int    `json:"amount"`
+}
+
+type UTxOut struct {
+	TxID   string
+	Index  int
 	Amount int
 }
 
 func makeCoinbaseTx(address string) *Tx {
 	txIns := []*TxIn{
-		{"COINBASE", minerReward},
+		{"", -1, "COINBASE"},
 	}
 	txOuts := []*TxOut{
 		{address, minerReward},
@@ -46,4 +59,25 @@ func makeCoinbaseTx(address string) *Tx {
 	}
 	tx.getId()
 	return &tx
+}
+
+func makeTx(from, to string, amount int) (*Tx, error) {
+
+}
+
+func (m *mempool) AddTx(to string, amount int) error {
+	tx, err := makeTx("bae", to, amount)
+	if err != nil {
+		return err
+	}
+	m.Txs = append(m.Txs, tx)
+	return nil
+}
+
+func (m *mempool) TxToConfirm() []*Tx {
+	coinbase := makeCoinbaseTx("bae")
+	txs := m.Txs
+	txs = append(txs, coinbase)
+	m.Txs = nil
+	return txs
 }
